@@ -5,8 +5,8 @@ services:
   ghost:
     image: ghost:1-alpine
     restart: always
-    ports:
-      - 8080:2368
+    depends_on:
+     - db
     environment:
       # see https://docs.ghost.org/docs/config#section-running-ghost-with-config-env-variables
       database__client: mysql
@@ -18,6 +18,9 @@ services:
   db:
     image: mysql:5.7
     restart: always
+    volumes:
+      #数据库的数据持久化到磁盘
+      - ./data/mysql:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: example
 
@@ -27,6 +30,9 @@ services:
     ports:
         - "80:80"
         - "443:443"
+    links:
+      - ghost
+      - phpmyadmin
     volumes:
         #server配置
         - ./nginx/sites:/etc/nginx/sites-available
@@ -37,13 +43,13 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
+    depends_on:
+     - db
     environment:
      - PMA_HOST=db
      - PMA_PORT=3306
      - PMA_USER=root
      - PMA_PASSWORD=example
     restart: always
-    ports:
-     - 8081:80
     volumes:
      - /sessions
