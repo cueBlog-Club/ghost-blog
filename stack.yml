@@ -1,0 +1,49 @@
+version: '3.1'
+
+services:
+
+  ghost:
+    image: ghost:1-alpine
+    restart: always
+    ports:
+      - 8080:2368
+    environment:
+      # see https://docs.ghost.org/docs/config#section-running-ghost-with-config-env-variables
+      database__client: mysql
+      database__connection__host: db
+      database__connection__user: root
+      database__connection__password: example
+      database__connection__database: ghost
+
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+        - "80:80"
+        - "443:443"
+    volumes:
+        #server配置
+        - ./nginx/sites:/etc/nginx/sites-available
+        #日志
+        - ./nginx/logs:/var/log/nginx
+        - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+     - PMA_HOST=db
+     - PMA_PORT=3306
+     - PMA_USER=root
+     - PMA_PASSWORD=example
+    restart: always
+    ports:
+     - 8081:80
+    volumes:
+     - /sessions
